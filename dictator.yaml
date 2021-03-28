@@ -1,0 +1,42 @@
+Dictator_version: 1
+Camunda Host:
+- name: camunda
+  port: 8443
+  protocol: https
+  host: davidgs.com
+Slack Listener:
+- name: dictatorbot
+  port: 9091
+  protocol: https
+  host: davidgs.com
+Authorized senders:
+- name: Mary Thengvall
+  username: mary_grace
+  is-on-call: false
+- name: Jeremy Meiss
+  username: jeremy
+  is-on-call: false
+- name: Jocelyn Mathews
+  username: jocelyn
+  is-on-call: true
+  order: 2
+- name: David G. Simmons
+  username: davidgs
+  is-on-call: true
+  order: 1
+- name: Quintessence Anx
+  username: quintessence
+  is-on-call: true
+  order: 3
+- name: Daniel Maher
+  username: phrawzty
+  is-on-call: true
+  order: 4
+Current On Call: quintessence
+On Call Index: 2
+Slack Secret: ITS_A_SECRET_YALL
+Total On Call: 4
+Response Url: https://slack.com/api/chat.postMessage
+Response Token: ITS_A_SECRET_YALL
+AppID: APPID
+Channel ID: CHANNEL_ID

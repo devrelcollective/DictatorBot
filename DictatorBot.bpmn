@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" id="Definitions_1efsd93" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.6.0">
+  <bpmn:process id="DictatorBot" name="DictatorBot" isExecutable="true">
+    <bpmn:sequenceFlow id="Flow_0q8rhw9" name="Message" sourceRef="StartEvent_1" targetRef="Activity_08wqhhy" />
+    <bpmn:exclusiveGateway id="user_auth" name="User Auth">
+      <bpmn:incoming>Flow_0ppohai</bpmn:incoming>
+      <bpmn:outgoing>Flow_017mavo</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0tb5bv7</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_1dtzs6h" sourceRef="Activity_08wqhhy" targetRef="Gateway_0u1o14q" />
+    <bpmn:sequenceFlow id="Flow_017mavo" name="Is authorized" sourceRef="user_auth" targetRef="task_type">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${senderOk}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0tb5bv7" name="not Authorized" sourceRef="user_auth" targetRef="format_message">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${not senderOk}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="Event_1cibw1h" name="Request Complete">
+      <bpmn:incoming>Flow_1cl77t5</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1i9m2dq" sourceRef="format_message" targetRef="send_message" />
+    <bpmn:sequenceFlow id="Flow_1cl77t5" sourceRef="send_message" targetRef="Event_1cibw1h" />
+    <bpmn:exclusiveGateway id="on-call-check" name="On Call Check">
+      <bpmn:incoming>Flow_0k89zpu</bpmn:incoming>
+      <bpmn:outgoing>Flow_1b4al5q</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1mhvog2</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_0k89zpu" sourceRef="Activity_0am1dt5" targetRef="on-call-check" />
+    <bpmn:sequenceFlow id="Flow_070wt9a" name="On Call requesed" sourceRef="task_type" targetRef="Activity_0am1dt5" />
+    <bpmn:sequenceFlow id="Flow_1k263e2" name="Rotation asked" sourceRef="task_type" targetRef="Activity_11xn5ao">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${command == "rotate" || command == "rotation" }</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="task_type" name="task type" default="Flow_070wt9a">
+      <bpmn:incoming>Flow_017mavo</bpmn:incoming>
+      <bpmn:outgoing>Flow_1k263e2</bpmn:outgoing>
+      <bpmn:outgoing>Flow_070wt9a</bpmn:outgoing>
+      <bpmn:outgoing>Flow_084r7r4</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1hw99aj</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_084r7r4" name="next on-call requested" sourceRef="task_type" targetRef="Activity_0a9dyzq">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${command == "next"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0kd7k8t" sourceRef="Activity_11xn5ao" targetRef="format_message" />
+    <bpmn:sequenceFlow id="Flow_06d3w6x" sourceRef="Activity_0a9dyzq" targetRef="format_message" />
+    <bpmn:serviceTask id="Activity_08wqhhy" name="Authorized User?" camunda:type="external" camunda:topic="validate_dictator">
+      <bpmn:incoming>Flow_0q8rhw9</bpmn:incoming>
+      <bpmn:outgoing>Flow_1dtzs6h</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_0am1dt5" name="Check proper on-call" camunda:type="external" camunda:topic="check_new_oncall">
+      <bpmn:incoming>Flow_070wt9a</bpmn:incoming>
+      <bpmn:outgoing>Flow_0k89zpu</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sendTask id="send_message" name="Send message" camunda:type="external" camunda:topic="send_message">
+      <bpmn:incoming>Flow_1i9m2dq</bpmn:incoming>
+      <bpmn:outgoing>Flow_1cl77t5</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:serviceTask id="format_message" name="Format Message" camunda:type="external" camunda:topic="format_message">
+      <bpmn:incoming>Flow_0tb5bv7</bpmn:incoming>
+      <bpmn:incoming>Flow_1mhvog2</bpmn:incoming>
+      <bpmn:incoming>Flow_06d3w6x</bpmn:incoming>
+      <bpmn:incoming>Flow_0kd7k8t</bpmn:incoming>
+      <bpmn:incoming>Flow_1xbz8ic</bpmn:incoming>
+      <bpmn:incoming>Flow_0gayirk</bpmn:incoming>
+      <bpmn:incoming>Flow_0f5h5pg</bpmn:incoming>
+      <bpmn:incoming>Flow_0mfnkj9</bpmn:incoming>
+      <bpmn:outgoing>Flow_1i9m2dq</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1b4al5q" sourceRef="on-call-check" targetRef="Activity_1cuby9c">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${onCallOK}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1mhvog2" sourceRef="on-call-check" targetRef="format_message">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${not onCallOK}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:serviceTask id="Activity_11xn5ao" name="get rotation" camunda:type="external" camunda:topic="get_rotation">
+      <bpmn:incoming>Flow_1k263e2</bpmn:incoming>
+      <bpmn:outgoing>Flow_0kd7k8t</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_0a9dyzq" name="get next on-call" camunda:type="external" camunda:topic="get_next">
+      <bpmn:incoming>Flow_084r7r4</bpmn:incoming>
+      <bpmn:outgoing>Flow_06d3w6x</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_1cuby9c" name="update on-call" camunda:type="external" camunda:topic="update_oncall">
+      <bpmn:incoming>Flow_1b4al5q</bpmn:incoming>
+      <bpmn:outgoing>Flow_0gayirk</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_1hw99aj" sourceRef="task_type" targetRef="Activity_17tqrr2">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${command == "who"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1xbz8ic" sourceRef="Activity_17tqrr2" targetRef="format_message" />
+    <bpmn:serviceTask id="Activity_17tqrr2" name="who&#39;s on-call" camunda:type="external" camunda:topic="whos_oncall">
+      <bpmn:incoming>Flow_1hw99aj</bpmn:incoming>
+      <bpmn:outgoing>Flow_1xbz8ic</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:startEvent id="StartEvent_1" name="Message Recieved" camunda:initiator="event_received">
+      <bpmn:outgoing>Flow_0q8rhw9</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1xxgeke" messageRef="Message_1uyfizy" />
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0gayirk" sourceRef="Activity_1cuby9c" targetRef="format_message" />
+    <bpmn:sequenceFlow id="get_help" name="Get Help" sourceRef="Gateway_0u1o14q" targetRef="Activity_0pulv84">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${command == "help" || command == "?" || command == "%3F"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:serviceTask id="Activity_0pulv84" name="get help" camunda:type="external" camunda:topic="get_help">
+      <bpmn:incoming>get_help</bpmn:incoming>
+      <bpmn:outgoing>Flow_0f5h5pg</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0f5h5pg" sourceRef="Activity_0pulv84" targetRef="format_message" />
+    <bpmn:exclusiveGateway id="Gateway_0u1o14q" default="Flow_0ppohai">
+      <bpmn:incoming>Flow_1dtzs6h</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ppohai</bpmn:outgoing>
+      <bpmn:outgoing>get_help</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1cx5s83</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_0ppohai" sourceRef="Gateway_0u1o14q" targetRef="user_auth" />
+    <bpmn:sequenceFlow id="Flow_1cx5s83" sourceRef="Gateway_0u1o14q" targetRef="getAuthorized">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${command == "auth" || command == "authorized"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0mfnkj9" sourceRef="getAuthorized" targetRef="format_message" />
+    <bpmn:serviceTask id="getAuthorized" name="Get Authorized Users" camunda:type="external" camunda:topic="get_auth">
+      <bpmn:incoming>Flow_1cx5s83</bpmn:incoming>
+      <bpmn:outgoing>Flow_0mfnkj9</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmn:message id="Message_1uyfizy" name="Query_dictator" />
+  <bpmn:message id="Message_08dzuqp" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="DictatorBot">
+      <bpmndi:BPMNEdge id="Flow_1xbz8ic_di" bpmnElement="Flow_1xbz8ic">
+        <di:waypoint x="1060" y="390" />
+        <di:waypoint x="1350" y="390" />
+        <di:waypoint x="1350" y="800" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1hw99aj_di" bpmnElement="Flow_1hw99aj">
+        <di:waypoint x="780" y="465" />
+        <di:waypoint x="780" y="390" />
+        <di:waypoint x="960" y="390" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1mhvog2_di" bpmnElement="Flow_1mhvog2">
+        <di:waypoint x="1050" y="735" />
+        <di:waypoint x="1050" y="840" />
+        <di:waypoint x="1300" y="840" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1b4al5q_di" bpmnElement="Flow_1b4al5q">
+        <di:waypoint x="1075" y="710" />
+        <di:waypoint x="1130" y="710" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06d3w6x_di" bpmnElement="Flow_06d3w6x">
+        <di:waypoint x="1060" y="590" />
+        <di:waypoint x="1320" y="590" />
+        <di:waypoint x="1320" y="800" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0kd7k8t_di" bpmnElement="Flow_0kd7k8t">
+        <di:waypoint x="1060" y="490" />
+        <di:waypoint x="1340" y="490" />
+        <di:waypoint x="1340" y="800" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_084r7r4_di" bpmnElement="Flow_084r7r4" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="780" y="515" />
+        <di:waypoint x="780" y="590" />
+        <di:waypoint x="960" y="590" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="881" y="556" width="57" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1k263e2_di" bpmnElement="Flow_1k263e2" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="805" y="490" />
+        <di:waypoint x="960" y="490" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="873" y="472" width="74" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_070wt9a_di" bpmnElement="Flow_070wt9a" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="780" y="515" />
+        <di:waypoint x="780" y="710" />
+        <di:waypoint x="840" y="710" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="687" y="642" width="86" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0k89zpu_di" bpmnElement="Flow_0k89zpu">
+        <di:waypoint x="940" y="710" />
+        <di:waypoint x="1025" y="710" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1cl77t5_di" bpmnElement="Flow_1cl77t5">
+        <di:waypoint x="1580" y="490" />
+        <di:waypoint x="1762" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1i9m2dq_di" bpmnElement="Flow_1i9m2dq">
+        <di:waypoint x="1400" y="840" />
+        <di:waypoint x="1440" y="840" />
+        <di:waypoint x="1440" y="490" />
+        <di:waypoint x="1480" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0tb5bv7_di" bpmnElement="Flow_0tb5bv7" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="590" y="515" />
+        <di:waypoint x="590" y="840" />
+        <di:waypoint x="1300" y="840" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="504" y="683" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_017mavo_di" bpmnElement="Flow_017mavo" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="615" y="490" />
+        <di:waypoint x="755" y="490" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="672" y="472" width="63" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1dtzs6h_di" bpmnElement="Flow_1dtzs6h">
+        <di:waypoint x="370" y="490" />
+        <di:waypoint x="435" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0q8rhw9_di" bpmnElement="Flow_0q8rhw9" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="198" y="490" />
+        <di:waypoint x="270" y="490" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="230" y="472" width="45" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0gayirk_di" bpmnElement="Flow_0gayirk">
+        <di:waypoint x="1180" y="750" />
+        <di:waypoint x="1180" y="820" />
+        <di:waypoint x="1300" y="820" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1di8ity_di" bpmnElement="get_help" bioc:stroke="#000" bioc:fill="#fff">
+        <di:waypoint x="460" y="460" />
+        <di:waypoint x="460" y="270" />
+        <di:waypoint x="960" y="270" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="453" y="362" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0f5h5pg_di" bpmnElement="Flow_0f5h5pg">
+        <di:waypoint x="1060" y="270" />
+        <di:waypoint x="1370" y="270" />
+        <di:waypoint x="1370" y="800" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ppohai_di" bpmnElement="Flow_0ppohai">
+        <di:waypoint x="485" y="490" />
+        <di:waypoint x="565" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1cx5s83_di" bpmnElement="Flow_1cx5s83">
+        <di:waypoint x="460" y="465" />
+        <di:waypoint x="460" y="120" />
+        <di:waypoint x="970" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0mfnkj9_di" bpmnElement="Flow_0mfnkj9">
+        <di:waypoint x="1070" y="120" />
+        <di:waypoint x="1390" y="120" />
+        <di:waypoint x="1390" y="800" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Gateway_0mqu5cr_di" bpmnElement="on-call-check" isMarkerVisible="true" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="1025" y="685" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1015" y="655" width="71" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_03tl98n_di" bpmnElement="Activity_0am1dt5">
+        <dc:Bounds x="840" y="670" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1q9csis_di" bpmnElement="format_message">
+        <dc:Bounds x="1300" y="800" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0z0sdf5_di" bpmnElement="Activity_1cuby9c">
+        <dc:Bounds x="1130" y="670" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1phujcz_di" bpmnElement="Activity_0a9dyzq">
+        <dc:Bounds x="960" y="550" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0b6tco1_di" bpmnElement="Activity_11xn5ao">
+        <dc:Bounds x="960" y="450" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0tpfksy_di" bpmnElement="Activity_17tqrr2">
+        <dc:Bounds x="960" y="350" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1f1raod_di" bpmnElement="task_type" isMarkerVisible="true" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="755" y="465" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="796.5" y="463" width="45" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1fc9dk3_di" bpmnElement="Activity_08wqhhy">
+        <dc:Bounds x="270" y="450" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0nxl4f6_di" bpmnElement="StartEvent_1" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="162" y="472" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="157" y="515" width="46" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1cibw1h_di" bpmnElement="Event_1cibw1h" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="1762" y="472" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1757" y="515" width="48" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0hylgwo_di" bpmnElement="send_message">
+        <dc:Bounds x="1480" y="450" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_06e4c44_di" bpmnElement="Activity_0pulv84">
+        <dc:Bounds x="960" y="230" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0p7zuno_di" bpmnElement="user_auth" isMarkerVisible="true" bioc:stroke="#000" bioc:fill="#fff">
+        <dc:Bounds x="565" y="465" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="566" y="435" width="49" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0u1o14q_di" bpmnElement="Gateway_0u1o14q" isMarkerVisible="true">
+        <dc:Bounds x="435" y="465" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1j4ymdw_di" bpmnElement="getAuthorized">
+        <dc:Bounds x="970" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
