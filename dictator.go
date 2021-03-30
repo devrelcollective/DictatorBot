@@ -18,9 +18,9 @@ import (
 	"syscall"
 	"time"
 
-	camundaclientgo "github.com/citilinkru/camunda-client-go"
-	"github.com/citilinkru/camunda-client-go/processor"
-	"github.com/robfig/cron/v3"
+	camundaclientgo "github.com/citilinkru/camunda-client-go/v2"
+	"github.com/citilinkru/camunda-client-go/v2/processor"
+	// "github.com/robfig/cron/v3"
 	"gopkg.in/yaml.v2"
 )
 
@@ -229,14 +229,19 @@ func validateDictator(newVars map[string]camundaclientgo.Variable, contx *proces
 
 func startCamundaProcess(data DictatorPayload) {
 
-	client := camundaclientgo.NewClient(camundaclientgo.ClientOptions{
-		// this should use values from the config file
-		EndpointUrl: config.CamundaHost[0].Protocol + "://" + config.CamundaHost[0].Host + ":" + fmt.Sprint(config.CamundaHost[0].Port) + "/engine-rest", //"https://davidgs.com:8443/engine-rest",
-		ApiUser:     "demo",
-		ApiPassword: "demo",
-		Timeout:     time.Second * 10,
-	})
+	opts := camundaclientgo.ClientOptions{}
+	opts.ApiPassword = "demo"
+	opts.ApiUser = "demo"
+	opts.EndpointUrl = config.CamundaHost[0].Protocol + "://" + config.CamundaHost[0].Host + ":" + fmt.Sprint(config.CamundaHost[0].Port) + "/engine-rest"
 
+	// 	camundaclientgo.ClientOptions{
+	// 	// this should use values from the config file
+	// 	EndpointUrl: config.CamundaHost[0].Protocol + "://" + config.CamundaHost[0].Host + ":" + fmt.Sprint(config.CamundaHost[0].Port) + "/engine-rest", //"https://davidgs.com:8443/engine-rest",
+	// 	ApiUser:     "demo",
+	// 	ApiPassword: "demo",
+	// 	Timeout:     time.Second * 10,
+	// })
+	messageName := "Query_dictator"
 	processKey := "DictatorBot"
 	variables := map[string]camundaclientgo.Variable{
 		"command":      {Value: strings.TrimSpace(data.Command), Type: "string"},
@@ -248,10 +253,17 @@ func startCamundaProcess(data DictatorPayload) {
 		"user_id":      {Value: data.UserID, Type: "string"},
 		"api_app_id":   {Value: data.APIAppID, Type: "string"},
 	}
-	_, err := client.ProcessDefinition.StartInstance(
-		camundaclientgo.QueryProcessDefinitionBy{Key: &processKey},
-		camundaclientgo.ReqStartInstance{Variables: &variables},
-	)
+	client := camundaclientgo.NewClient(opts)
+	reqMessage := camundaclientgo.ReqMessage{}
+	reqMessage.MessageName = messageName
+	reqMessage.BusinessKey = processKey
+	reqMessage.ProcessVariables = &variables
+	err := client.Message.SendMessage(&reqMessage)
+
+	// _, err := client.ProcessDefinition.StartInstance(
+	// 	camundaclientgo.QueryProcessDefinitionBy{Key: &processKey},
+	// 	camundaclientgo.ReqStartInstance{Variables: &variables},
+	// )
 	if err != nil {
 		log.Printf("Error starting process: %s\n", err)
 		return
@@ -261,7 +273,7 @@ func startCamundaProcess(data DictatorPayload) {
 // Handles all the incomming https requests
 func dictator(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		log.Println("GET Method Not Supported")
+		// log.Println("GET Method Not Supported")
 		http.Error(w, "GET Method not supported", 400)
 	} else {
 		key := r.Header.Get("X-Slack-Signature")
@@ -288,7 +300,7 @@ func dictator(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(400)
 			return
 		}
-		log.Println(t.Command)
+		// log.Println(t.Command)
 		w.WriteHeader(200)
 		startCamundaProcess(t)
 	}
@@ -329,11 +341,11 @@ func main() {
 		WriteDictator()
 		os.Exit(1)
 	}()
-	cro := cron.New()
-	cro.AddFunc("0 12 * * MON", func() {
-		RunEverySecond()
-	})
-	cro.Start()
+	// cro := cron.New()
+	// cro.AddFunc("0 12 * * MON", func() {
+	// 	RunEverySecond()
+	// })
+	// cro.Start()
 
 	client := camundaclientgo.NewClient(camundaclientgo.ClientOptions{
 		EndpointUrl: config.CamundaHost[0].Protocol + "://" + config.CamundaHost[0].Host + ":" + fmt.Sprint(config.CamundaHost[0].Port) + "/engine-rest",
@@ -370,7 +382,6 @@ func main() {
 			//	fmt.Printf("Running task %s. WorkerId: %s. TopicName: %s\n", ctx.Task.Id, ctx.Task.WorkerId, ctx.Task.TopicName)
 
 			vars := make(map[string]camundaclientgo.Variable)
-
 			vars["message_type"] = camundaclientgo.Variable{Value: "success", Type: "string"}
 			vars["message"] = camundaclientgo.Variable{Value: getDictatorString(), Type: "string"}
 			err := ctx.Complete(processor.QueryComplete{
@@ -510,7 +521,7 @@ func main() {
 				timer = "timer"
 			}
 			if timer == "timer" {
-				fmt.Println("Timer event fired!")
+				// fmt.Println("Timer event fired!")
 				vars := make(map[string]camundaclientgo.Variable)
 				lastTater := getOnCall()
 				if config.OnCallIndex+1 >= len(getRotation()) {
@@ -536,6 +547,8 @@ func main() {
 				return nil
 			} else {
 				text := fmt.Sprintf("%v", varb["command"].Value)
+							fmt.Printf("Get Auth: %v\n", varb["command"].Value)
+
 				newTater, err := url.QueryUnescape(text)
 				if err != nil {
 					WriteDictator()
